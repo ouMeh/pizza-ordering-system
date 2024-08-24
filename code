@@ -1,0 +1,216 @@
+from tabulate import tabulate
+import mysql.connector as m
+name,phno,add,mop,amt = "", "", "","",""
+
+def createdb():
+  con=m.connect(host="localhost",user="fiona",passwd="student")
+  c=con.cursor()
+  c.execute("create database pizza")
+  con.close()
+#createdb()
+  
+def create():
+  con=m.connect(host="localhost",user="fiona",passwd="student",database="pizza")
+  c=con.cursor()
+  c.execute("create table menu\
+(ITEM_NO int(2) primary key,\
+PIZZA_NAME varchar(30),\
+PRICE int(5),\
+TYPE varchar(15))")
+  con.close()
+#create()
+
+def createb():
+    con = m.connect(host="localhost", user="fiona", passwd="student", database="pizza")
+    c = con.cursor()
+    c.execute("create table bill\
+(ITEM_NO int(2),PIZZA_NAME VARCHAR(30),TYPE VARCHAR(15),\
+QTY INT(3),PRICE INT(5),NO_OF_SLICES int (2),CRUST varchar(5),PHONE_NO varchar(10))")
+    con.close()
+#createb()
+    
+def createmenu():
+  con=m.connect(host="localhost",user="fiona",passwd="student",database="pizza")
+  c=con.cursor()
+  c.execute('insert into menu values\
+(1,"BARBEQUE PARTY",520,"NON-VEG"),\
+(2,"PERI-PERI CHICKEN",520,"NON-VEG"),\
+(3,"TANDOORI PIZZA",500,"NON-VEG"),\
+(4,"FLAMING CHICKEN",490,"NON-VEG"),\
+(5,"PEPPERONI PIZZA",480,"NON-VEG"),\
+(6,"MARGHERITA",350,"VEG"),\
+(7,"ZESTY PANEER",460,"VEG"),\
+(8,"CRISPY CORN",460,"VEG"),\
+(9,"MUSHROOM PIZZA",490,"VEG"),\
+(10,"VEG EXTRAVAGANZA",500,"VEG")')
+  con.commit()
+  con.close()
+#createmenu()
+
+def insert():
+    con=m.connect(host="localhost",user="fiona",passwd="student",database="pizza")
+    c=con.cursor()
+    ino=int(input("Enter the item no:"))
+    nm=input("Enter the pizza name:")
+    pr=int(input("Enter the prize:"))
+    t=input("Enter the type (veg/non veg):")
+    q="INSERT INTO MENU VALUES({},'{}',{},'{}')".format(ino,nm,pr,t)
+    c.execute(q)
+    print("Inserted into Menu Successfully!")
+    con.commit()
+    con.close()
+
+def delete():
+    con=m.connect(host="localhost",user="fiona",passwd="student",database="pizza")
+    c=con.cursor()
+    ino=int(input("enter the item number need to delete:"))
+    q="DELETE FROM MENU WHERE ITEM_NO={}".format(ino)
+    c.execute(q)
+    print("Deleted from Menu Successfully!")
+    con.commit()
+    con.close()
+
+def update():
+    con=m.connect(host="localhost",user="fiona",passwd="student",database="pizza")
+    c=con.cursor()
+    ino=int(input("enter the item no need to update:"))
+    p=int(input("enter the prize need to be updated:"))
+    q="UPDATE MENU \
+      set price={}  \
+      where ITEM_NO={}".format(p,ino)
+    c.execute(q)
+    print("Updated Menu Successfully!")
+    con.commit()
+    con.close()
+
+def menu():
+    con=m.connect(host="localhost",user="fiona",passwd="student",database="pizza")
+    c=con.cursor()
+    c.execute("SELECT* FROM MENU")
+    n=c.fetchall()
+    str="MENU"
+    print(str.center(115))
+    print("-"*115)
+    print(tabulate(n, headers=["ITEM NO.","PIZZA NAME","PRICE","TYPE"],tablefmt="fancy_grid"))
+
+def admin_login():
+    username = input("Enter your username: ")  
+    password = input("Enter your password: ")
+    if username=='admin' and password=='tasty':  
+        print("Login successful!")
+        admin()
+    else:  
+        print("Invalid username or password. Please try again.")  
+
+def admin():
+    data= [["Insert into Menu","Delete from Menu","Update Menu","View Menu","Exit"]]
+    headers = ['1', '2', '3', '4','5']
+    print(tabulate(data, headers=headers, tablefmt="fancy_grid"))
+
+    while True:
+        y=int(input("Enter your choice:"))
+        if y==1:
+            insert()
+        elif y==2:
+            delete()
+        elif y==3:
+            update()
+        elif y==4:
+            menu()
+        elif y==5:
+            break
+        else:
+            print("Invalid Choice!")
+            
+def bill():
+    global name, phno, add, mop
+    menu()
+    print("ORDER FROM THE ABOVE MENU")
+    print("="*100)
+    
+    name=input("Enter your name:")
+    phno=input("Enter your phone number:")
+    add=input("Enter your address:")
+    bill2()
+
+def bill2():
+    global phno
+    con = m.connect(host="localhost", user="fiona", passwd="student", database="pizza")
+    c = con.cursor()
+    c.execute("DELETE FROM bill WHERE PHONE_NO ='{}'".format(phno))
+    con.commit()
+    
+    it = int(input("Enter item number:"))
+    qty = int(input("Enter quantity:"))
+    ns = int(input("Enter number of slices:"))
+    crust = input("Thick or Thin crust:")
+    mop = input("Enter your mode of payment (1-Cash on Delivery, 2-Online):")
+
+    c.execute("SELECT * FROM menu WHERE ITEM_NO={}".format(it))
+    d = c.fetchone()
+
+    if d:
+        item_total = d[2] * qty
+        c.execute("INSERT INTO bill (ITEM_NO, PIZZA_NAME, TYPE, QTY, PRICE, NO_OF_SLICES, CRUST, PHONE_NO) \
+VALUES({}, '{}', '{}', {}, {}, {}, '{}', '{}')".format(d[0], d[1], d[3], qty, item_total, ns, crust, phno))
+    con.commit()
+
+    p = input("Do you want to add more? (yes/no): ")
+    if p == 'no':
+      c.execute("SELECT SUM(PRICE) FROM bill WHERE PHONE_NO='{}'".format(phno))
+      total_amt = c.fetchone()[0]
+      bill3(total_amt, mop)
+    elif p == 'yes':
+      bill2() 
+    else:
+      print("Invalid choice! Please enter 'yes' or 'no'.")
+    con.close()
+
+def bill3(total_amt, mop):
+    global name, add, phno
+    con = m.connect(host="localhost", user="fiona", passwd="student", database="pizza")
+    c = con.cursor()
+    c.execute("SELECT * FROM bill WHERE PHONE_NO='{}'".format(phno))
+    n = c.fetchall()
+    
+    if n:
+        str = "ORDER SUMMARY"
+        print(str.center(115))
+        print("-" * 115)
+        print("Customer Name:", name, "\n", "Address:", add, "\n", "Phone Number:", phno, "\n")
+        print(tabulate(n, headers=["ITEM NO.", "PIZZA NAME", "TYPE", "QTY", "PRICE", "NO_OF_SLICES", "CRUST", "PHONE NO."], tablefmt="fancy_grid"))
+        print("Total Amount:", total_amt)
+        print("Mode of Payment:", mop)
+    con.close()
+
+def cancel():
+    con=m.connect(host="localhost",user="fiona",passwd="student",database="pizza")
+    c=con.cursor()
+    phone=input("Enter your phone number:")
+    c.execute("DELETE FROM bill WHERE PHONE_NO='{}'".format(phone))
+    print("Ordered Cancelled Successfully!")
+    con.commit()
+    con.close()
+              
+def main():
+   data= [["Menu", "Place Order", "Cancel Order","Admin Login", "Exit"]]
+   headers = ['1', '2', '3', '4','5']
+   print("WELCOME TO XYZ'S PIZZERIA")
+   print("-"*45)
+
+   while True:
+     print(tabulate(data, headers=headers, tablefmt="fancy_grid"))
+     m=int(input("Enter your choice:"))
+     if m==1:
+       menu()
+     elif m==2:
+       bill()
+     elif m==3:
+       cancel()
+     elif m==4:
+       admin_login()
+     elif m==5:
+       break
+     else:
+       print("Invald Choice!")
+main()
