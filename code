@@ -137,8 +137,6 @@ def bill2():
     global phno
     con = m.connect(host="localhost", user="fiona", passwd="student", database="pizza")
     c = con.cursor()
-    c.execute("DELETE FROM bill WHERE PHONE_NO ='{}'".format(phno))
-    con.commit()
     
     it = int(input("Enter item number:"))
     qty = int(input("Enter quantity:"))
@@ -181,6 +179,8 @@ def bill3(total_amt, mop):
         print(tabulate(n, headers=["ITEM NO.", "PIZZA NAME", "TYPE", "QTY", "PRICE", "NO_OF_SLICES", "CRUST", "PHONE NO."], tablefmt="fancy_grid"))
         print("Total Amount:", total_amt)
         print("Mode of Payment:", mop)
+    c.execute("DELETE FROM bill WHERE PHONE_NO ='{}'".format(phno))
+    con.commit()
     con.close()
 
 def cancel():
